@@ -1,0 +1,58 @@
+#include <Wire.h>
+#include <PS4Controller.h>
+
+#define SLAVE_ADDR 0x08   // STM32 I2C slave address
+
+uint8_t command = 0;
+
+void setup()
+{
+  Serial.begin(115200);
+
+  Wire.begin();                     // ESP32 I2C Master
+  PS4.begin("01:02:03:04:05:06");   // Put ESP32 Bluetooth MAC here
+
+  Serial.println("PS4 Controller Connected");
+}
+
+void loop()
+{
+  if (PS4.isConnected())
+  {
+    command = 0;
+
+    // D-Pad Controls
+    if (PS4.Up())
+    {
+      command = 1;     // Green LED
+    }
+    else if (PS4.Right())
+    {
+      command = 2;     // Orange LED
+    }
+    else if (PS4.Down())
+    {
+      command = 4;     // Red LED
+    }
+    else if (PS4.Left())
+    {
+      command = 8;     // Blue LED
+    }
+
+    // Cross button = STOP
+    if (PS4.Cross())
+    {
+      command = 0;     // All LEDs OFF
+    }
+
+    // Send command to STM32
+    Wire.beginTransmission(SLAVE_ADDR);
+    Wire.write(command);
+    Wire.endTransmission();
+
+    Serial.print("Sent Command: ");
+    Serial.println(command);
+
+    delay(50);
+  }
+}
